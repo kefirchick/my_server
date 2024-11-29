@@ -1,0 +1,11 @@
+{
+  "name": "my_server",
+  "version": "1.0.0",
+  "description": "Node JS sever for experiments with API and databases",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kefirchick",
+  "license": "ISC"
+}
