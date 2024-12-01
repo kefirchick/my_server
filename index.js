@@ -1,52 +1,40 @@
-const axios = require("axios");
+const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const register = require("./handlers");
 
-const HEADERS = {
-    headers: {
-        "X-API-KEY": "0cdceb70-6d1b-4fa7-a3a9-a43284cdbae7",
-        "Content-Type": "application/json",
-    },
+const PORT = 3000;
+const SECRET_KEY = "secret_key_for_test";
+
+const app = express();
+const users = {};
+
+app.use(express.json());
+
+const generateToken = (username) => {
+    return jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
 };
-const BASE_URL = "https://kinopoiskapiunofficial.tech";
-const DELAY_TIME = 200; // Increase to avoid error 429
-const ENDPOINT = "/api/v2.2/films/top";
-const TOTAL_PAGES = 13;
 
-function getURL(endPoint, base, page) {
-    const url = new URL(endPoint, base);
-    url.searchParams.append("page", `${page}`);
+// Register a new user
+app.post('/register', register);
 
-    return url;
-}
+// Login a user
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = users[username]; // Look up the user
 
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
+    const isValid = await bcrypt.compare(password, user.password); // Compare hashed passwords
+    const token = generateToken(username); // Generate JWT
+    res.json({ token }); // Send the token to the client
+});
 
-async function getTop250() {
-    const films = [];
-    console.log("Fetching, please wait...");
-    try {
-        for (let i = 1; i <= TOTAL_PAGES; i++) {
-            const result = await axios.get(getURL(ENDPOINT, BASE_URL, i), HEADERS);
-            films.push(...result.data.films);
-            await delay(DELAY_TIME);
-        }
-    } catch (error) {
-        throw new Error(
-            `Error: ${error.status ?? ""}\n${
-                error.response?.data?.message ?? error.message
-            }`
-        );
-    }
+// Access a protected route
+app.get('/protected', (req, res) => {
+    const token = req.headers.authorization.split(' ')[1]; // Get the token from the Authorization header
+    const user = jwt.verify(token, SECRET_KEY); // Verify the token
+    res.json({ message: `Hello, ${user.username}` }); // Return a welcome message
+});
 
-    return films;
-}
-
-(async () => {
-    try {
-        const top250 = await getTop250();
-        console.log(top250.map((film) => film.nameRu));
-    } catch (error) {
-        console.log(error.message);
-    }
-})();
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
