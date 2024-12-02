@@ -1,38 +1,52 @@
-const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const register = require("./handlers");
+const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const sequelize = require("./config/database");
+const User = require("./models/User");
 
 const PORT = 3000;
 const SECRET_KEY = "secret_key_for_test";
 
 const app = express();
-const users = {};
 
 app.use(express.json());
 
+sequelize
+    .sync()
+    .then(() => {
+        console.log("Database synced successfully");
+    })
+    .catch((error) => {
+        console.error("Error syncing database:", error);
+    });
+
 const generateToken = (username) => {
-    return jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
+    return jwt.sign({ username }, SECRET_KEY, { expiresIn: "1h" });
 };
 
-// Register a new user
-app.post('/register', register);
-
-// Login a user
-app.post('/login', async (req, res) => {
+app.post("/register", async (req, res) => {
     const { username, password } = req.body;
-    const user = users[username]; // Look up the user
-
-    const isValid = await bcrypt.compare(password, user.password); // Compare hashed passwords
-    const token = generateToken(username); // Generate JWT
-    res.json({ token }); // Send the token to the client
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await User.create({ username, password: hashedPassword });
+    res.json({ message: "User registered" });
 });
 
-// Access a protected route
-app.get('/protected', (req, res) => {
-    const token = req.headers.authorization.split(' ')[1]; // Get the token from the Authorization header
-    const user = jwt.verify(token, SECRET_KEY); // Verify the token
-    res.json({ message: `Hello, ${user.username}` }); // Return a welcome message
+app.post("/login", async (req, res) => {
+    const { username, password } = req.body;
+    const user = await User.findOne({ where: { username } });
+    const isValid = await bcrypt.compare(password, user.password);
+    if (isValid) {
+        const token = generateToken(username);
+        res.json({ token });
+    } else {
+        res.status(401).json({ message: "Invalid credentials" });
+    }
+});
+
+app.get("/protected", (req, res) => {
+    const token = req.headers.authorization.split(" ")[1];
+    const user = jwt.verify(token, SECRET_KEY);
+    res.json({ message: `Hello, ${user.username}` });
 });
 
 app.listen(PORT, () => {
