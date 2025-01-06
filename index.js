@@ -11,12 +11,6 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/pub", express.static(__dirname + "/public"));
-
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/about.html');
-});
-
 sequelize
     .sync()
     .then(() => {
