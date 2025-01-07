@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -5,9 +6,6 @@ const sequelize = require("./config/database");
 const User = require("./models/User");
 const Post = require('./models/Post');
 const Comment = require('./models/Comment');
-
-const PORT = 3000;
-const SECRET_KEY = "secret_key_for_test";
 
 const app = express();
 
@@ -47,10 +45,10 @@ app.post("/login", async (req, res) => {
 
 app.get("/protected", (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
-    const user = jwt.verify(token, SECRET_KEY);
+    const user = jwt.verify(token, process.env.SECRET_KEY);
     res.json({ message: `Hello, ${user.username}` });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+app.listen(process.env.PORT, () => {
+    console.log(`Server running on http://localhost:${process.env.PORT}`);
 });
