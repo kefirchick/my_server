@@ -1,21 +1,19 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Post = require('./Post');
 const Comment = require('./Comment');
 
-const User = sequelize.define('user', {
-  username: {
+const Post = sequelize.define('post', {
+  caption: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
   },
-  password: {
-    type: DataTypes.STRING,
+  text: {
+    type: DataTypes.TEXT,
     allowNull: false,
   },
 });
 
-User.hasMany(Post);
-User.hasMany(Comment);
+Post.hasMany(Comment);
 
-module.exports = User;
+module.exports = Post;

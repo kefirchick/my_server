@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sequelize = require("./config/database");
 const User = require("./models/User");
+const Post = require('./models/Post');
+const Comment = require('./models/Comment');
 
 const PORT = 3000;
 const SECRET_KEY = "secret_key_for_test";
@@ -12,7 +14,7 @@ const app = express();
 app.use(express.json());
 
 sequelize
-    .sync()
+    .sync({force: true})
     .then(() => {
         console.log("Database synced successfully");
     })
